@@ -1,14 +1,21 @@
 # markdown.yazi
 
-Image-based Markdown previewer for [Yazi](https://github.com/sxyazi/yazi). Renders `.md`, `.mdx`, and `.markdown` files as full-resolution JPEG images — matching the graphical fidelity of Yazi's built-in PDF preview.
+Image-based Markdown previewer for [Yazi](https://github.com/sxyazi/yazi). Renders `.md`, `.mdx`, and `.markdown` files as full-resolution JPEG images, scaled to the preview pane.
 
 <!-- TODO: add demo GIF -->
 <!-- https://github.com/user-attachments/assets/... -->
 
+## Requirements
+
+- Yazi 26.9.1 or newer (the plugin reads the terminal's cell size via `rt.term.cell_size()` to rasterize at the pane's real resolution)
+- `pandoc`
+- `weasyprint` — either on `PATH` or in the plugin-local venv described below
+- `pdftoppm` and `pdfinfo` (poppler)
+
 ## Installation
 
 ```sh
-ya pkg add yazi-rs/plugins:markdown
+ya pkg add juanlopez4691/markdown
 ```
 
 Then install the required tools:
@@ -30,6 +37,8 @@ Any installation method that puts a `weasyprint` binary on `PATH` works (e.g. `p
 python3 -m venv ~/.config/yazi/plugins/markdown.yazi/venv
 ~/.config/yazi/plugins/markdown.yazi/venv/bin/pip install weasyprint
 ```
+
+The venv is local to your machine and is not part of the package — a `ya pkg` deploy leaves it alone, but deleting the plugin directory takes it with it.
 
 ## Setup
 
@@ -74,27 +83,31 @@ edit = [{ run = 'export "${EDITOR%% *}" && "${EDITOR#* }" "$@"', block = true, f
 markdown.md  →  pandoc  →  HTML  →  weasyprint  →  PDF  →  pdftoppm  →  JPEG
 ```
 
-Each step caches its output (Pandoc's HTML per file, the PDF per file + pane geometry, one JPEG per page). The PDF is cached per-file and per preview-pane geometry; JPEGs are cached per-page. Adjacent pages are pre-rendered in the background so navigation is instant. Every page (and PDF) is written to a temp file and renamed into place, so a cached page is never read while it is still being written.
+Each step caches its output: Pandoc's HTML per file (it does not depend on the geometry), the PDF per file and pane geometry, and one JPEG per page. Adjacent pages are pre-rendered in the background so navigation is instant. Every artefact is written to a temp file and renamed into place, so a cached page is never read while it is still being written.
 
-The page size is not fixed: WeasyPrint is given an `@page` size whose aspect ratio is exactly the preview pane's (from `job.area` and `rt.term.cell_size()`), and the raster is produced at the pane's *device* pixel size, so Yazi's fit-to-area scaling fills the full column width instead of being letterboxed. Resizing the pane re-renders at the new geometry (quantized to 8×4 cells to avoid thrashing while dragging).
+The page size is not fixed. WeasyPrint is given an `@page` size whose aspect ratio is exactly the preview pane's (from `job.area` and the terminal's cell size), and the raster is produced at the pane's *device* pixel size, so Yazi's fit-to-area scaling fills the whole column width instead of letterboxing it. Resizing the pane re-renders at the new geometry, quantized to 8×4 cells so dragging the pane border does not re-render on every cell.
 
-> Yazi never upscales a preview: if `preview.max_width`/`max_height` are smaller than the pane's device pixels, the rendered page is shrunk and the preview ends up narrower than the column. Keep them generous (e.g. `4096`); the plugin logs a hint to `yazi.log` when the cap kicks in.
+> Yazi never upscales a preview: if `preview.max_width`/`max_height` are smaller than the pane's device pixels, the rendered page is shrunk and the preview ends up narrower than the column. Keep them generous (e.g. `4096`); the plugin logs a hint to `yazi.log` when that cap is what limits the preview.
 
 ## Usage
 
-- **Preview**: Select a markdown file in Yazi. The first page renders after ~0.5–1s, subsequent navigation is instant.
-- **Page navigation**: `Shift+J` (next page), `Shift+K` (previous page) — same keys as Yazi's built-in PDF plugin.
+- **Preview**: select a markdown file in Yazi. The first page renders in ~0.5s; revisiting a file at the same pane size is instant.
+- **Page navigation**: `J` (next page), `K` (previous page) — the same keys as Yazi's built-in PDF previewer.
 
 ## Performance
+
+Measured on macOS for a ~10 KB document:
 
 | Action                  | Time     | Notes                               |
 | ----------------------- | -------- | ----------------------------------- |
 | First page (cold)       | ~0.5s    | pandoc + weasyprint + pdftoppm      |
-| Re-render after resize  | ~0.4s    | weasyprint + pdftoppm (HTML cached) |
-| First page (PDF cached) | ~0.07s   | pdftoppm only                       |
+| Re-render after resize  | ~0.5s    | weasyprint + pdftoppm (HTML cached) |
+| First page (PDF cached) | ~0.06s   | pdftoppm only                       |
 | Subsequent pages        | instant  | pre-rendered JPEG from cache        |
 
-Pre-rendering covers 3 pages ahead in your travel direction, so sequential J/K navigation never hits a cold render. pdftoppm runs at 150 DPI, producing ~1240×1754px JPEG per A4 page — matching Yazi's built-in PDF plugin.
+About 0.3s of every WeasyPrint run is its own Python import, which is the floor for a cold render; Yazi's preloader renders the files visible in a folder in the background, which hides most of that in practice.
+
+Pre-rendering covers 3 pages ahead in your travel direction, so sequential `J`/`K` navigation never hits a cold render. The raster matches the pane's device pixels (DPI derived from the terminal's cell size), so a page costs whatever the pane is tall rather than a fixed 150 DPI — a large preview is around 2000×2800 px per page.
 
 ## Caveats
 
@@ -108,9 +121,13 @@ python3 -m venv ~/.config/yazi/plugins/markdown.yazi/venv
 ~/.config/yazi/plugins/markdown.yazi/venv/bin/pip install weasyprint
 ```
 
+### Caches and geometry
+
+The PDF and page caches are keyed by the pane geometry and the terminal's cell size, so resizing the pane — or changing the terminal font size — re-renders the current file once. Cached pages live in Yazi's preview cache directory (`$TMPDIR/yazi-$UID`, e.g. `…/yazi-501`) alongside the previews of everything else.
+
 ### Page boundaries
 
-WeasyPrint paginates HTML to A4 pages. Markdown content does not naturally map to pages — breaks may occur mid-paragraph. Use `Shift+J`/`Shift+K` to scroll between pages.
+WeasyPrint paginates the HTML to pages whose size is derived from the preview pane, so the page count depends on the pane's shape. Markdown content does not naturally map to pages — breaks may occur mid-paragraph. Use `J`/`K` to move between pages.
 
 ### PATH
 
@@ -118,7 +135,11 @@ WeasyPrint paginates HTML to A4 pages. Markdown content does not naturally map t
 
 ### Very large files
 
-Very long markdown files produce many PDF pages (~150–250KB JPEG per page). Directional pre-rendering keeps sequential navigation smooth; only random jumps incur a cold pdftoppm call.
+Very long markdown files produce many PDF pages (~150–250 KB JPEG per page at typical pane sizes). Directional pre-rendering keeps sequential navigation smooth; only random jumps incur a cold `pdftoppm` call.
+
+### Editing the plugin
+
+Files deployed by `ya pkg` are sealed read-only. To change anything, work in a clone and push; then `ya pkg add juanlopez4691/markdown` (or `ya pkg upgrade`) redeploys it.
 
 ## License
 
