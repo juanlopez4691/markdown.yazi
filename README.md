@@ -74,7 +74,11 @@ edit = [{ run = 'export "${EDITOR%% *}" && "${EDITOR#* }" "$@"', block = true, f
 markdown.md  →  pandoc  →  HTML  →  weasyprint  →  PDF  →  pdftoppm  →  JPEG
 ```
 
-Each step caches its output. The PDF is cached per-file; JPEGs are cached per-page. Adjacent pages are pre-rendered in the background so navigation is instant.
+Each step caches its output (Pandoc's HTML per file, the PDF per file + pane geometry, one JPEG per page). The PDF is cached per-file and per preview-pane geometry; JPEGs are cached per-page. Adjacent pages are pre-rendered in the background so navigation is instant. Every page (and PDF) is written to a temp file and renamed into place, so a cached page is never read while it is still being written.
+
+The page size is not fixed: WeasyPrint is given an `@page` size whose aspect ratio is exactly the preview pane's (from `job.area` and `rt.term.cell_size()`), and the raster is produced at the pane's *device* pixel size, so Yazi's fit-to-area scaling fills the full column width instead of being letterboxed. Resizing the pane re-renders at the new geometry (quantized to 8×4 cells to avoid thrashing while dragging).
+
+> Yazi never upscales a preview: if `preview.max_width`/`max_height` are smaller than the pane's device pixels, the rendered page is shrunk and the preview ends up narrower than the column. Keep them generous (e.g. `4096`); the plugin logs a hint to `yazi.log` when the cap kicks in.
 
 ## Usage
 
@@ -85,7 +89,8 @@ Each step caches its output. The PDF is cached per-file; JPEGs are cached per-pa
 
 | Action                  | Time     | Notes                               |
 | ----------------------- | -------- | ----------------------------------- |
-| First page (cold)       | ~0.5–1s  | pandoc + weasyprint + pdftoppm      |
+| First page (cold)       | ~0.5s    | pandoc + weasyprint + pdftoppm      |
+| Re-render after resize  | ~0.4s    | weasyprint + pdftoppm (HTML cached) |
 | First page (PDF cached) | ~0.07s   | pdftoppm only                       |
 | Subsequent pages        | instant  | pre-rendered JPEG from cache        |
 
