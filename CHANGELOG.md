@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-11-05
+
+### Fixed
+
+Documentation only — no behaviour changes:
+
+- The Requirements section claimed Yazi 26.9.1+; the plugin targets 26.1.22 (`--- @since`), and `rt.term.cell_size()`, the reason the claim was raised, exists since 25.12.29
+
 ## [1.0.1] - 2026-11-05
 
 ### Fixed
@@ -52,6 +60,7 @@ Documentation only — no behaviour changes:
 - `LC_ALL=C` on pdftoppm for locale-independent last-page detection
 - Support for `.md`, `.mdx`, and `.markdown` file extensions
 
+[1.0.2]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.2
 [1.0.1]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.1
 [1.0.0]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.0
 [0.1.0]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v0.1.0
