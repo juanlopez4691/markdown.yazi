@@ -7,7 +7,7 @@ Image-based Markdown previewer for [Yazi](https://github.com/sxyazi/yazi). Rende
 
 ## Requirements
 
-- Yazi 26.1.22 or newer (the version this plugin targets; `rt.term.cell_size()`, which it uses to rasterize at the pane's real resolution, exists since 25.12.29). Tested on 26.9.1.
+- Yazi 25.12.29 or newer — the first release with `rt.term.cell_size()`, which the plugin uses to rasterize at the pane's real resolution. Tested on 26.9.1.
 - `pandoc`
 - `weasyprint` — either on `PATH` or in the plugin-local venv described below
 - `pdftoppm` and `pdfinfo` (poppler)

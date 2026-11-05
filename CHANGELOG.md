@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.3] - 2026-11-05
+
+### Fixed
+
+Documentation and metadata only — no behaviour changes:
+
+- The Yazi requirement is now stated as what it actually is: `--- @since 25.12.29`, the first release that ships `rt.term.cell_size()`, the only API this plugin uses that is newer than v25.5.31 (everything else — `job.area` on peek *and* preload jobs, `rt.preview.max_width`/`max_height`, the `ya.file_cache { file, skip }` form, `fs.cha`/`fs.write`, `ya.sleep`, `Err()`, `only_if`/`upper_bound` — is present in v25.5.31). v1.0.2 had corrected the claim to 26.1.22, which was still two releases too high
+
 ## [1.0.2] - 2026-11-05
 
 ### Fixed
@@ -60,6 +68,7 @@ Documentation only — no behaviour changes:
 - `LC_ALL=C` on pdftoppm for locale-independent last-page detection
 - Support for `.md`, `.mdx`, and `.markdown` file extensions
 
+[1.0.3]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.3
 [1.0.2]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.2
 [1.0.1]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.1
 [1.0.0]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.0

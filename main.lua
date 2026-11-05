@@ -1,4 +1,4 @@
---- @since 26.1.22
+--- @since 25.12.29
 local M = {}
 
 local PANDOC = "pandoc"
