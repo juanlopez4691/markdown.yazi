@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-11-05
+
+### Fixed
+
+Documentation only — no behaviour changes:
+
+- Installation pointed at `yazi-rs/plugins:markdown` instead of this repository (`ya pkg add juanlopez4691/markdown`)
+- The performance notes claimed a fixed 150 DPI and ~1240×1754 px per A4 page; the raster is produced at the preview pane's device pixels and A4 is not used
+- The page-boundaries caveat said WeasyPrint paginates to A4, when the page size is derived from the preview pane
+- Page navigation was documented as `Shift+J`/`Shift+K`; the keys are `J`/`K` (`seek 5`/`-5` in Yazi's default keymap, clamped to one page per press)
+
+### Added
+
+- A Requirements section: Yazi 26.9.1+, `pandoc`, `weasyprint`, `pdftoppm`/`pdfinfo`
+- A cache/geometry caveat: the PDF and page caches are keyed by pane geometry and cell size, so a resize or a terminal font change re-renders the current file once
+- A note that the plugin-local venv is machine-local, and that `ya pkg` deploys read-only files (edit from a clone, then redeploy)
+
 ## [1.0.0] - 2026-11-05
 
 ### Changed
@@ -35,5 +52,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LC_ALL=C` on pdftoppm for locale-independent last-page detection
 - Support for `.md`, `.mdx`, and `.markdown` file extensions
 
+[1.0.1]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.1
 [1.0.0]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v1.0.0
 [0.1.0]: https://github.com/juanlopez4691/markdown.yazi/releases/tag/v0.1.0
